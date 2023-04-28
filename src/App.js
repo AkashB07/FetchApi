@@ -14,22 +14,26 @@ function App() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch("https://swapi.dev/api/films/");
+      const response = await fetch("https://react-http-3914e-default-rtdb.asia-southeast1.firebasedatabase.app/movies.json");
 
       if (!response.ok) {
         throw new Error('Something went wrong ....Retrying!');
       }
 
       const data = await response.json();
-      const transformedMovies = data.results.map((movieData) => {
-        return {
-          id: movieData.episode_id,
-          title: movieData.title,
-          openingText: movieData.opening_crawl,
-          releaseDate: movieData.release_date,
-        };
-      });
-      setMovies(transformedMovies);
+      
+      const loadedMovies = [];
+
+      for (const key in data) {
+        loadedMovies.push({
+          id: key,
+          title: data[key].title,
+          openingText: data[key].openingText,
+          releaseDate: data[key].releasedate,
+        });
+      }
+
+      setMovies(loadedMovies);
     }
 
     catch (error) {
@@ -47,7 +51,37 @@ function App() {
 
   useEffect(() => {
     fetchMoviesHandler()
-  }, [fetchMoviesHandler])
+  }, [fetchMoviesHandler]);
+
+  const addMovieHandler = async (movie) => {
+    const response = await fetch(
+      'https://react-http-3914e-default-rtdb.asia-southeast1.firebasedatabase.app/movies.json',
+      {
+        method: 'POST',
+        body: JSON.stringify(movie),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    const data = await response.json();
+    fetchMoviesHandler();
+    console.log(data);
+  };
+
+  const deleteMovieHandler = async (id) => {
+    await fetch(
+      `https://react-http-62b90-default-rtdb.asia-southeast1.firebasedatabase.app/movies/${id}.json`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    fetchMoviesHandler();
+  };
+
 
   const cancelretryHandler = () => {
     clearTimeout(retry);
@@ -56,7 +90,7 @@ function App() {
 
   let content = <p>Found no movies.</p>
   if (movies.length > 0) {
-    content = <MoviesList movies={movies} />
+    content = <MoviesList movies={movies} deleteRequest={deleteMovieHandler}/>
   }
   if (error) {
     content = <p>{error}</p>
@@ -69,15 +103,15 @@ function App() {
 
   return (
     <React.Fragment>
-      <MovieForm />
+      <MovieForm onAddMovie={addMovieHandler}/>
       <section>
         <button onClick={fetchMoviesHandler}>Fetch Movies</button>
       </section>
       <section>
-      {!error && content}
+      {!error && <MoviesList movies={movies} deleteRequest={deleteMovieHandler}/>}
         {check && !isloading && error && (
         <span>
-          <p>{content}</p>
+          {content}<br/>
           <button onClick={cancelretryHandler}>Cancel retrying</button>
         </span>
       )}

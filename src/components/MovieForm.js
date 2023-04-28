@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import classes from "./MovieForm.module.css";
 
-const MovieForm = () => {
+const MovieForm = (props) => {
     const movieTitleRef = useRef();
     const movieOpeningRef = useRef();
     const movieDateRef = useRef();
@@ -13,13 +13,12 @@ const MovieForm = () => {
         const movieDate = movieDateRef.current.value;
 
         const NewMovieObj = {
-            id: Math.random().toLocaleString(),
             title: movieTitle,
             openingText: movieOpening,
             releaseDate: movieDate,
         };
 
-        console.log(NewMovieObj);
+        props.onAddMovie(NewMovieObj);
     };
     return (
         <div className={classes.movieform}>
